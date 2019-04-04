@@ -45,7 +45,7 @@ class HeadToHeadSwissPairingTest extends TestCase {
       )
     );
     $byes = array('Andreas' => 1, 'Shon' => 1, 'Darren' => 1, 'Matt' => 1);
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups, $byes);
+    $builder = $this->getBuilder($groups, $byes);
 
     for($i=0;$i<100;$i++) {
       $pairings = $builder->build();
@@ -65,7 +65,7 @@ class HeadToHeadSwissPairingTest extends TestCase {
         'Eric' => array()
       )
     );
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups);
+    $builder = $this->getBuilder($groups);
 
     for($i=0;$i<100;$i++) {
       $pairings = $builder->build();
@@ -87,7 +87,7 @@ class HeadToHeadSwissPairingTest extends TestCase {
         'Eric' => array()
       )
     );
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups);
+    $builder = $this->getBuilder($groups);
 
     for($i=0;$i<100;$i++) {
       $pairings = $builder->build();
@@ -106,7 +106,7 @@ class HeadToHeadSwissPairingTest extends TestCase {
         'Eric' => array()
       )
     );
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups);
+    $builder = $this->getBuilder($groups);
 
     for($i=0;$i<100;$i++) {
       $pairings = $builder->build();
@@ -130,7 +130,7 @@ class HeadToHeadSwissPairingTest extends TestCase {
       )
     );
     $byes = array('Andreas' => 1, 'Shon' => 1, 'Darren' => 1, 'Matt' => 1);
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups, $byes);
+    $builder = $this->getBuilder($groups, $byes);
 
     for($i=0;$i<100;$i++) {
       $pairings = $builder->build();
@@ -172,25 +172,15 @@ class HeadToHeadSwissPairingTest extends TestCase {
         'PlayerCRank5' => array()
       ),
     );
-    $builder = new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups);
+    $builder = $this->getBuilder($groups);
 
     $group_num = 0;
-    global $player_group;
     $player_group = array();
     foreach($groups as $players) {
       foreach($players as $player => $opponents) {
         $player_group[$player] = $group_num;
       }
       $group_num++;
-    }
-
-    function minrank($cur_rank, $player) {
-      global $player_group;
-      return min($cur_rank, $player_group[$player]);
-    }
-    function maxrank($cur_rank, $player) {
-      global $player_group;
-      return max($cur_rank, $player_group[$player]);
     }
 
     for($i=0;$i<100;$i++) {
@@ -204,8 +194,12 @@ class HeadToHeadSwissPairingTest extends TestCase {
       $prior_max = 0;
       $prior_group = array();
       foreach($pairings['groups'] as $group) {
-        $this_min = array_reduce($group, "minrank", 999);
-        $this_max = array_reduce($group, "maxrank", 0);
+        $this_min = array_reduce($group, function ($cur_rank, $player) use ($player_group) {
+          return min($cur_rank, $player_group[$player]);
+        }, 999);
+        $this_max = array_reduce($group, function ($cur_rank, $player) use ($player_group) {
+          return max($cur_rank, $player_group[$player]);
+        }, 0);
         $this->assertGreaterThanOrEqual($prior_max, $this_min, print_r($group, true) . " jumped " . print_r($prior_group, true));
         $prior_min = $this_min;
         $prior_max = $this_max;
@@ -213,6 +207,10 @@ class HeadToHeadSwissPairingTest extends TestCase {
       }
     }
 
+  }
+
+  protected function getBuilder($groups, $byes = array()) {
+	  return new haugstrup\TournamentUtils\HeadToHeadSwissPairing($groups, $byes);
   }
 
   // Should write a test to start with an odd number of players and run
